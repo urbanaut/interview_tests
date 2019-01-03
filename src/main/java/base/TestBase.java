@@ -94,7 +94,7 @@ public class TestBase {
 
         driver = new ChromeDriver(options);
         driver.manage().timeouts().implicitlyWait(20, SECONDS);
-//        driver.navigate().to(BASE_URL);
+        driver.navigate().to(BASE_URL);
         return driver;
     }
 
