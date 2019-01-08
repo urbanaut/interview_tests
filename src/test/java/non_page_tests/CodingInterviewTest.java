@@ -1,9 +1,12 @@
 package non_page_tests;
 
+import com.google.gson.JsonObject;
 import com.jayway.restassured.RestAssured;
+import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.response.ResponseBody;
+import com.jayway.restassured.specification.RequestSpecification;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -16,10 +19,12 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.equalTo;
 
 public class CodingInterviewTest {
 
@@ -54,8 +59,52 @@ public class CodingInterviewTest {
         JsonPath jp = new JsonPath(json);
 
         System.out.println(jp.get("data.first_name"));
-
         Assert.assertEquals("George", jp.get("data.first_name"));
+
+        given().when()
+                .get("api/users")
+                .then().assertThat()
+                .statusCode(200)
+                .assertThat()
+                .body("data[2].last_name", containsString("Wong"));
+
+        given().when()
+                .get("api/users?page=2")
+                .then().assertThat()
+                .body("data[0].id", equalTo(4));
+
+        given().when()
+                .get("api/users/23")
+                .then().assertThat()
+                .statusCode(404);
+    }
+
+    @Test
+    public void postRequest() {
+        RestAssured.baseURI = "https://reqres.in";
+
+        given().contentType(ContentType.JSON)
+                .body("{\"email\":\"peter@klaven\",\"password\":\"cityslicka\"}")
+                .when().post("/api/login")
+                .then().assertThat()
+                .statusCode(200)
+                .body("token", equalTo("QpwL5tke4Pnpja7X"));
+    }
+
+    @Test
+    public void putRequest() {
+        RestAssured.baseURI = "https://reqres.in";
+        given().contentType(ContentType.JSON)
+                .body("{\"name\":\"morpheus\",\"job\":\"zion resident\"}")
+                .when().put("/api/users/2")
+                .then().assertThat()
+                .statusCode(200)
+                .body("updatedAt", containsString("2019-01-08"));
+    }
+
+    @Test
+    public void getDelayedResponse() {
+
     }
 
     @Test
