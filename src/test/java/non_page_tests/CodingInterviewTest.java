@@ -44,7 +44,30 @@ public class CodingInterviewTest {
     // REST API Tests //
     @Test
     public void testRestApi() {
+        // Set the base URI to 'https://reqres.in'
         RestAssured.baseURI = "https://reqres.in/";
+
+        // 1. "/api/users/23" returns a 404 status code
+        given().when()
+                .get("api/users/23")
+                .then().assertThat()
+                .statusCode(404);
+
+        // 2. "/api/unknown/2" returns a response where the year is equal to 2001
+        given().when()
+                .get("/api/unknown/2")
+                .then().assertThat()
+                .body("data.year", equalTo(2001));
+
+        // 3. "/api/users" returns a 200 status code and the 3rd user from "/api/users" has the last name, "Wong"
+        given().when()
+                .get("api/users")
+                .then().assertThat()
+                .statusCode(200)
+                .assertThat()
+                .body("data[2].last_name", containsString("Wong"));
+
+        // BONUS: Using JSONPath, assert that the first name from "api/users/1" is "George"
         Response response = RestAssured.given()
                 .when()
                 .get("api/users/1")
@@ -56,24 +79,6 @@ public class CodingInterviewTest {
         String json = response.asString();
         JsonPath jp = new JsonPath(json);
         Assert.assertEquals("George", jp.get("data.first_name"));
-
-        given().when()
-                .get("api/users/23")
-                .then().assertThat()
-                .statusCode(404);
-
-        given().when()
-                .get("/api/unknown/2")
-                .then().assertThat()
-                .body("data.year", equalTo(2001));
-
-        given().when()
-                .get("api/users")
-                .then().assertThat()
-                .statusCode(200)
-                .assertThat()
-                .body("data[2].last_name", containsString("Wong"));
-
     }
 
     @Test
@@ -139,26 +144,32 @@ public class CodingInterviewTest {
     // Selenium UI Tests //
     @Test
     public void amazonTests() throws Exception {
+        // 1. Navigate to https://amazon.com
         driver.navigate().to("https://www.amazon.com/");
 
+        // 2. Change the search type to "Electronics"
         driver.findElement(By.id("searchDropdownBox")).click();
-
         Select allSelector = new Select(driver.findElement(By.id("searchDropdownBox")));
         allSelector.selectByValue("search-alias=electronics");  // OR allSelector.selectByVisibleText("Electronics");
 
+        // 3. Search for "calculators"
         driver.findElement(By.id("twotabsearchtextbox")).sendKeys("calculators");
         driver.findElement(By.xpath("//input[@value='Go']")).click();
 
+        // 4. Sort the results by "Average Customer Review"
         Select sortBy = new Select(driver.findElement(By.id("sort")));
-        sortBy.selectByValue("review-rank");
+        sortBy.selectByValue("review-rank"); // OR allSelector.selectByVisibleText("Avg. Customer Review");
 
+        // 5. Filter results to only show calculators in the range of $300 to $350
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("leftNavContainer"))); // OR Thread.sleep(1000);
         driver.findElement(By.id("low-price")).sendKeys("300");
         driver.findElement(By.id("high-price")).sendKeys("350");
         driver.findElement(By.xpath("//span/input[@value='Go']")).click();
 
+        // 6. Save all the search results into a List of WebElements
         List<WebElement> results = driver.findElements(By.xpath("//div[@id='resultsCol']//li[contains(@id,'result_')]"));
 
+        // 7. Use a for-each loop to assert that each result title contains the word "calculator"
         for (WebElement result : results) {
             Assert.assertTrue(result.getText().toLowerCase().contains("calculator"));
         }
