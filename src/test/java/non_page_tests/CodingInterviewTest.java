@@ -1,12 +1,10 @@
 package non_page_tests;
 
-import com.google.gson.JsonObject;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.path.json.JsonPath;
 import com.jayway.restassured.response.Response;
 import com.jayway.restassured.response.ResponseBody;
-import com.jayway.restassured.specification.RequestSpecification;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -18,8 +16,10 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
 
 import static com.jayway.restassured.RestAssured.given;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -53,13 +53,19 @@ public class CodingInterviewTest {
                 .statusCode(200)
                 .extract().response();
 
-        System.out.println(response.asString());
-
         String json = response.asString();
         JsonPath jp = new JsonPath(json);
-
-        System.out.println(jp.get("data.first_name"));
         Assert.assertEquals("George", jp.get("data.first_name"));
+
+        given().when()
+                .get("api/users/23")
+                .then().assertThat()
+                .statusCode(404);
+
+        given().when()
+                .get("/api/unknown/2")
+                .then().assertThat()
+                .body("data.year", equalTo(2001));
 
         given().when()
                 .get("api/users")
@@ -68,21 +74,11 @@ public class CodingInterviewTest {
                 .assertThat()
                 .body("data[2].last_name", containsString("Wong"));
 
-        given().when()
-                .get("api/users?page=2")
-                .then().assertThat()
-                .body("data[0].id", equalTo(4));
-
-        given().when()
-                .get("api/users/23")
-                .then().assertThat()
-                .statusCode(404);
     }
 
     @Test
     public void postRequest() {
         RestAssured.baseURI = "https://reqres.in";
-
         given().contentType(ContentType.JSON)
                 .body("{\"email\":\"peter@klaven\",\"password\":\"cityslicka\"}")
                 .when().post("/api/login")
@@ -100,11 +96,6 @@ public class CodingInterviewTest {
                 .then().assertThat()
                 .statusCode(200)
                 .body("updatedAt", containsString("2019-01-08"));
-    }
-
-    @Test
-    public void getDelayedResponse() {
-
     }
 
     @Test
@@ -142,77 +133,124 @@ public class CodingInterviewTest {
                 .body("results[2].title", containsString("Butter"));
     }
 
+    // End of REST API Tests //
+
 
     // Selenium UI Tests //
     @Test
-    public void clothesShopTests() {
-        driver.navigate().to("http://automationpractice.com/index.php");
-        String body = driver.getPageSource();
-        System.out.println(body);
-        WebElement shirts = driver.findElement(By.xpath("(//a[text()='T-shirts'])[2]"));
-        WebDriverWait wait= new WebDriverWait(driver,15);
-        wait.until(ExpectedConditions.elementToBeClickable(shirts));
-        shirts.click();
-        driver.findElement(By.id("selectProductSort")).click();
-    }
-
-    @Test
-    public void amazonTests() throws InterruptedException {
+    public void amazonTests() throws Exception {
         driver.navigate().to("https://www.amazon.com/");
 
         driver.findElement(By.id("searchDropdownBox")).click();
 
         Select allSelector = new Select(driver.findElement(By.id("searchDropdownBox")));
-        allSelector.selectByValue("search-alias=electronics");
+        allSelector.selectByValue("search-alias=electronics");  // OR allSelector.selectByVisibleText("Electronics");
 
-        driver.findElement(By.id("twotabsearchtextbox")).sendKeys("calculator");
+        driver.findElement(By.id("twotabsearchtextbox")).sendKeys("calculators");
         driver.findElement(By.xpath("//input[@value='Go']")).click();
 
         Select sortBy = new Select(driver.findElement(By.id("sort")));
         sortBy.selectByValue("review-rank");
 
-        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("leftNavContainer")));
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("leftNavContainer"))); // OR Thread.sleep(1000);
         driver.findElement(By.id("low-price")).sendKeys("300");
         driver.findElement(By.id("high-price")).sendKeys("350");
         driver.findElement(By.xpath("//span/input[@value='Go']")).click();
 
         List<WebElement> results = driver.findElements(By.xpath("//div[@id='resultsCol']//li[contains(@id,'result_')]"));
-        Assert.assertEquals(results.size(),24);
 
         for (WebElement result : results) {
-            System.out.println(result.getText());
             Assert.assertTrue(result.getText().toLowerCase().contains("calculator"));
         }
     }
 
-    public static void main(String args[]) {
+    // End of Selenium UI Tests //
 
-        // loop for 100 times
-        int n = 100;
 
-        for (int i=1; i<=n; i++) {
+    // Simple Java Coding Tests //
+    public static void main(String[] args) {
+        // Find duplicates in a String array
 
-            // number divisible by 15(divisible by
-            // both 3 & 5), print 'FizzBuzz' in
-            // place of the number
-            if (i%15==0)
-                System.out.print("FizzBuzz"+" ");
+        String[] strArray = {"abc", "def", "mno", "xyz", "pqr", "xyz", "def"};
+        for (int i = 0; i < strArray.length-1; i++) {
 
-            // number divisible by 5, print 'Buzz'
-            // in place of the number
-            else if (i%5==0)
-                System.out.print("Buzz"+" ");
+            for (int j = i+1; j < strArray.length; j++) {
+                if( (strArray[i].equals(strArray[j])) && (i != j) ) {
+                    System.out.println("1) Duplicate Element is : "+strArray[j]);
+                }
+            }
+        }
 
-            // number divisible by 3, print 'Fizz'
-            // in place of the number
-            else if (i%3==0)
-                System.out.print("Fizz"+" ");
-
-            // print the numbers
-            else
-                System.out.print(i+" ");
+        // OR... //
+        String[] myArray = {"abc", "def", "mno", "xyz", "pqr", "xyz", "def"};
+        Set<String> set = new HashSet<>();
+        for (String arrayElement : myArray) {
+            if(!set.add(arrayElement)) {
+                System.out.println("2) Duplicate Element is : "+arrayElement);
+            }
         }
     }
 
+
+    // Find 2nd largest number in number array //
+//    static int secondLargest(int[] input) {
+//        int firstLargest, secondLargest;
+//        //Checking first two elements of input array
+//        if(input[0] > input[1]) {
+//            //If first element is greater than second element
+//            firstLargest = input[0];
+//            secondLargest = input[1];
+//        }
+//        else {
+//            //If second element is greater than first element
+//            firstLargest = input[1];
+//            secondLargest = input[0];
+//        }
+//        //Checking remaining elements of input array
+//        for (int i = 2; i < input.length; i++) {
+//            if(input[i] > firstLargest) {
+//                //If element at 'i' is greater than 'firstLargest'
+//                secondLargest = firstLargest;
+//                firstLargest = input[i];
+//            } else if (input[i] < firstLargest && input[i] > secondLargest) {
+//                //If element at 'i' is smaller than 'firstLargest' and greater than 'secondLargest'
+//                secondLargest = input[i];
+//            }
+//        }
+//        return secondLargest;
+//    }
+
+//    public static void main(String[] args) {
+//        int[] nums = {1, 2, 3, 4, 5, 6, 7, 8, 9};
+//        System.out.println(secondLargest(nums));
+//    }
+
+
+    // Fibonacci 1 //
+//    public static int fibonacci(int number) {
+//        if(number == 1 || number == 2){
+//            return 1;
+//        }
+//        return fibonacci(number-1) + fibonacci(number -2);
+//    }
+//
+//    // Fibonacci 2 //
+//    public static int fibonacci2(int number) {
+//        if (number == 1 || number == 2) {
+//            return 1;
+//        }
+//
+//        int fibo1 = 1, fibo2 = 1, fibonacci = 1;
+//
+//        for(int i= 3; i<= number; i++){
+//            fibonacci = fibo1 + fibo2;
+//            fibo1 = fibo2;
+//            fibo2 = fibonacci;
+//        }
+//
+//        return fibonacci;
+//    }
+
+    // End of Simple Java Coding Tests //
 
 }
